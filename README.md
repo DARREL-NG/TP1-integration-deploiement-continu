@@ -1,4 +1,5 @@
 # TP Master Data Engineering — Real-Time Sales Analytics & DevOps
+# Ngadjui & Ongolo
 
 Projet fil rouge : industrialiser une pipeline Big Data de ventes temps réel avec tests, Jenkins et SonarQube.
 
