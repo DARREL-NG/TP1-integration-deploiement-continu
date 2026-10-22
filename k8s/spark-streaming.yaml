@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-streaming
+  labels:
+    app: spark-streaming
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-streaming
+  template:
+    metadata:
+      labels:
+        app: spark-streaming
+    spec:
+      enableServiceLinks: false
+      initContainers:
+        - name: wait-for-deps
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z kafka 29092;        do echo 'attente kafka';    sleep 3; done
+              until nc -z postgres 5432;      do echo 'attente postgres'; sleep 3; done
+              until nc -z spark-master 7077;  do echo 'attente spark';    sleep 3; done
+      containers:
+        - name: spark-streaming
+          image: sales-spark:tp3          # construite depuis docker/spark/Dockerfile.k8s
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: sales-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: postgres-secret, key: POSTGRES_PASSWORD } }
+            - name: POD_IP
+              valueFrom: { fieldRef: { fieldPath: status.podIP } }
+          command: ["/opt/spark/bin/spark-submit"]
+          args:
+            - --master
+            - spark://spark-master:7077
+            # Les executors doivent pouvoir rappeler le driver : on annonce l'IP du Pod
+            - --conf
+            - spark.driver.host=$(POD_IP)
+            - --conf
+            - spark.driver.bindAddress=0.0.0.0
+            - --conf
+            - spark.jars.ivy=/tmp/.ivy
+            - --conf
+            - spark.executor.memory=512m
+            - --packages
+            - org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.postgresql:postgresql:42.7.3
+            - /opt/spark-app/sales_stream.py

@@ -1,0 +1,27 @@
+# Équivalent du service "kafka-init" : création du topic, une seule fois.
+# Le Job réessaie (backoffLimit) tant que Kafka n'est pas prêt.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-init
+spec:
+  backoffLimit: 20
+  template:
+    spec:
+      enableServiceLinks: false
+      restartPolicy: OnFailure
+      containers:
+        - name: kafka-init
+          image: confluentinc/cp-kafka:7.6.1
+          command: ["kafka-topics"]
+          args:
+            - --bootstrap-server
+            - kafka:29092
+            - --create
+            - --if-not-exists
+            - --topic
+            - sales.orders
+            - --partitions
+            - "1"
+            - --replication-factor
+            - "1"

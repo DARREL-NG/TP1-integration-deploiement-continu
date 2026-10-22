@@ -1,0 +1,9 @@
+# Image Spark pour Kubernetes : image officielle multi-arch (amd64/arm64).
+# treeverse/bitnami-spark:3.5 n'existe qu'en arm64 et ne tourne pas sur Minikube amd64.
+FROM spark:3.5.3-python3
+
+USER root
+
+RUN pip install --no-cache-dir psycopg2-binary==2.9.9
+
+COPY spark/sales_stream.py /opt/spark-app/sales_stream.py
