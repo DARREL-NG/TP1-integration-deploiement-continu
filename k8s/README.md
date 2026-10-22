@@ -43,3 +43,14 @@ kubectl port-forward service/sales-api 8000:8000
 - **Flux Data** : `POST /api/orders` -> commande `ORD-B1F3DE4E13` (300,00) publiée dans Kafka, traitée par Spark et retrouvée dans `processed_orders` environ 27 s plus tard.
 - **Mise à l'échelle** : `kubectl scale --replicas=3` crée 2 Pods supplémentaires (IP distinctes), le Deployment passe à `3/3`, puis revient à 1 réplica.
 - **Suppression d'un Pod** : après `kubectl delete pod sales-api-bdb54f79c-dn8ks`, le ReplicaSet constate qu'il manque un réplica par rapport à l'état souhaité (`replicas: 1`) et crée immédiatement `sales-api-bdb54f79c-rdsd9`, qui passe `Running` en 8 s. Le Service `sales-api` redirige automatiquement le trafic vers le nouveau Pod grâce au label `app: sales-api`, sans intervention manuelle.
+
+## Preuves
+
+| Livrable | Capture |
+|---|---|
+| Manifestes sur la branche `dev` | ![](preuves/01-manifestes-github-dev.png) |
+| `get pods` / `get deployments` / `get services` | ![](preuves/02-pods-deployments-services.png) |
+| API accessible via le Service (Swagger) | ![](preuves/03a-api-swagger.png) |
+| Flux API -> Kafka -> Spark -> PostgreSQL | ![](preuves/03b-api-kafka-spark-postgres.png) |
+| Mise à l'échelle à 3 réplicas | ![](preuves/04a-scale-3-replicas.png) |
+| Suppression d'un Pod et recréation automatique | ![](preuves/04b-suppression-pod-autoreparation.png) |
